@@ -1,0 +1,52 @@
+name: ALin Watcher
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: alin-watcher
+  cancel-in-progress: false
+
+jobs:
+  check-alin:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Recuperer le projet
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installer les dependances
+        run: pip install -r requirements.txt
+
+      - name: Verifier les T2
+        env:
+          ALIN_HOUSING_REQUEST_ID: ${{ secrets.ALIN_HOUSING_REQUEST_ID }}
+          ALIN_LOGIN: ${{ secrets.ALIN_LOGIN }}
+          ALIN_PASSWORD: ${{ secrets.ALIN_PASSWORD }}
+          ALIN_GEXRT_API_KEY: ${{ secrets.ALIN_GEXRT_API_KEY }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+        run: python main.py
+
+      - name: Sauvegarder les annonces vues
+        run: |
+          if git diff --quiet data/offers.db; then
+            echo "Aucune nouvelle annonce."
+          else
+            git config user.name "ALin Watcher Bot"
+            git config user.email "actions@github.com"
+            git add data/offers.db
+            git commit -m "Update seen ALin offers"
+            git push
+          fi

@@ -1,0 +1,15 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# VS Code History
+.history/
+.lh/
+
+# Windows
+Thumbs.db
